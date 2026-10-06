@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pass-O-Meter — Password Threat Analyzer</title>
+  <meta name="description" content="Client-side cybersecurity password strength analyzer. Entropy, attack models, and pattern detection — nothing leaves your browser." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="space" aria-hidden="true">
+    <div class="nebula nebula-a"></div>
+    <div class="nebula nebula-b"></div>
+    <canvas id="stars"></canvas>
+  </div>
+
+  <header class="nav">
+    <a class="brand" href="#">
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="brand-name">Pass-O-Meter</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#analyzer">Analyze</a>
+      <a href="#intel">Intel</a>
+      <a href="#model">Model</a>
+    </nav>
+    <div class="nav-cta">
+      <span class="chip"><i></i> Local only</span>
+      <button type="button" class="btn ghost" id="nav-generate">Generate</button>
+      <a class="btn solid" href="#analyzer">Check strength</a>
+    </div>
+  </header>
+
+  <section class="hero-stage">
+    <div class="hero-copy">
+      <h1>
+        Pass-O-Meter —<br />
+        Defending you From<br />
+        <span class="grad">Credential Hackers</span>
+      </h1>
+      <p class="lede">
+        Score entropy, pattern leakage, and crack time across online and offline attack models.
+        Your secret never leaves this browser — wrap existing passwords in post-compromise awareness.
+      </p>
+
+      <form class="hero-form" id="analyzer" autocomplete="off" onsubmit="return false;">
+        <label class="pill-field">
+          <span>PASSWORD</span>
+          <div class="pill-input">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 8V6a3 3 0 1 1 6 0v3H9z"/></svg>
+            <input id="password" type="password" autocomplete="new-password" spellcheck="false" placeholder="Enter a password to analyze" />
+            <button type="button" id="toggle-vis" class="text-btn" aria-label="Show password" aria-pressed="false"><span>Show</span></button>
+          </div>
+        </label>
+        <div class="hero-actions">
+          <button type="button" id="generate" class="btn solid">Generate strong <span>↑</span></button>
+          <button type="button" id="clear" class="btn ghost">Clear</button>
+        </div>
+      </form>
+      <p class="privacy">Analysis runs on-device. Zero exfil. No network calls.</p>
+    </div>
+
+    <div class="orb" aria-hidden="true">
+      <div class="orb-glow"></div>
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="rays"></div>
+      <canvas id="globe" width="720" height="720"></canvas>
+    </div>
+  </section>
+
+  <main>
+    <section class="console">
+      <article class="card meter-panel">
+        <div class="card-head">
+          <h3>Threat index</h3>
+          <span class="mono" id="score-label">Standby</span>
+        </div>
+        <div class="gauge-wrap">
+          <svg class="gauge" viewBox="0 0 200 120" aria-hidden="true">
+            <defs>
+              <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#ff4d7a" />
+                <stop offset="45%" stop-color="#c084fc" />
+                <stop offset="100%" stop-color="#5ce1ff" />
+              </linearGradient>
+            </defs>
+            <path class="gauge-track" d="M20 110 A80 80 0 0 1 180 110" />
+            <path id="gauge-fill" class="gauge-fill" d="M20 110 A80 80 0 0 1 180 110" />
+            <text x="100" y="88" text-anchor="middle" class="gauge-score" id="gauge-score">--</text>
+            <text x="100" y="108" text-anchor="middle" class="gauge-unit">/ 100</text>
+          </svg>
+          <p class="verdict" id="verdict">Awaiting signal</p>
+        </div>
+        <div class="bars">
+          <div class="bar"><span>Entropy</span><div><i id="bar-entropy"></i></div></div>
+          <div class="bar"><span>Complexity</span><div><i id="bar-complex"></i></div></div>
+          <div class="bar"><span>Uniqueness</span><div><i id="bar-unique"></i></div></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid-3" id="intel">
+      <article class="card">
+        <div class="card-head">
+          <h3>Composition</h3>
+          <span class="mono">Charset</span>
+        </div>
+        <ul class="checks" id="composition"></ul>
+      </article>
+      <article class="card">
+        <div class="card-head">
+          <h3>Attack surface</h3>
+          <span class="mono">Crack time</span>
+        </div>
+        <ul class="attacks" id="attacks"></ul>
+      </article>
+      <article class="card">
+        <div class="card-head">
+          <h3>Intel</h3>
+          <span class="mono">Findings</span>
+        </div>
+        <ul class="findings" id="findings"></ul>
+      </article>
+    </section>
+
+    <section class="card stats-panel">
+      <div class="card-head">
+        <h3>Metrics</h3>
+        <span class="mono">Cryptographic estimates</span>
+      </div>
+      <div class="metrics" id="metrics"></div>
+    </section>
+
+    <section class="card rec-panel">
+      <div class="card-head">
+        <h3>Hardening directives</h3>
+        <span class="mono">Remediation</span>
+      </div>
+      <ul class="recs" id="recs"></ul>
+    </section>
+
+    <section class="edu" id="model">
+      <h3>Why this scoring model</h3>
+      <div class="edu-grid">
+        <article>
+          <h4>01 · Entropy</h4>
+          <p>Charset size and length estimate search space. Repeats, sequences, and dictionary words reduce effective entropy far below the theoretical maximum.</p>
+        </article>
+        <article>
+          <h4>02 · Attack models</h4>
+          <p>Online throttled logins, unthrottled APIs, slow hashes (bcrypt/argon2), and GPU-accelerated unsalted hashes produce very different time-to-crack.</p>
+        </article>
+        <article>
+          <h4>03 · Patterns</h4>
+          <p>Keyboard walks, years, leetspeak, and common base words are first in wordlists. Length without randomness is not a defense.</p>
+        </article>
+        <article>
+          <h4>04 · Hygiene</h4>
+          <p>Use a unique passphrase per account, a password manager, and phishing-resistant MFA (passkeys / hardware keys) for high-value systems.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Pass-O-Meter · Defensive security tooling · Client-side only</p>
+    <p class="mono">Estimates are educational. Real attackers also use targeted intel, reuse, and credential stuffing.</p>
+  </footer>
+
+  <script src="globe.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
