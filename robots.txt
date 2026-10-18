@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://password-strength-checker-one-lac.vercel.app/
